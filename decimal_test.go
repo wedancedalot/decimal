@@ -14,35 +14,28 @@ import (
 	"time"
 )
 
-type testEnt struct {
-	float float64
-	short string
-	exact string
-}
-
-var testTable = []*testEnt{
-	{3.141592653589793, "3.141592653589793", ""},
-	{3, "3", ""},
-	{1234567890123456, "1234567890123456", ""},
-	{1234567890123456000, "1234567890123456000", ""},
-	{1234.567890123456, "1234.567890123456", ""},
-	{.1234567890123456, "0.1234567890123456", ""},
-	{0, "0", ""},
-	{.1111111111111110, "0.111111111111111", ""},
-	{.1111111111111111, "0.1111111111111111", ""},
-	{.1111111111111119, "0.1111111111111119", ""},
-	{.000000000000000001, "0.000000000000000001", ""},
-	{.000000000000000002, "0.000000000000000002", ""},
-	{.000000000000000003, "0.000000000000000003", ""},
-	{.000000000000000005, "0.000000000000000005", ""},
-	{.000000000000000008, "0.000000000000000008", ""},
-	{.1000000000000001, "0.1000000000000001", ""},
-	{.1000000000000002, "0.1000000000000002", ""},
-	{.1000000000000003, "0.1000000000000003", ""},
-	{.1000000000000005, "0.1000000000000005", ""},
-	{.1000000000000008, "0.1000000000000008", ""},
-	{1e25, "10000000000000000000000000", ""},
-	{math.MaxInt64, strconv.FormatInt(math.MaxInt64, 10), ""},
+var testTable = map[float64]string{
+	3.141592653589793:   "3.141592653589793",
+	3:                   "3",
+	1234567890123456:    "1234567890123456",
+	1234567890123456000: "1234567890123456000",
+	1234.567890123456:   "1234.567890123456",
+	.1234567890123456:   "0.1234567890123456",
+	0:                   "0",
+	.1111111111111110:   "0.111111111111111",
+	.1111111111111111:   "0.1111111111111111",
+	.1111111111111119:   "0.1111111111111119",
+	.000000000000000001: "0.000000000000000001",
+	.000000000000000002: "0.000000000000000002",
+	.000000000000000003: "0.000000000000000003",
+	.000000000000000005: "0.000000000000000005",
+	.000000000000000008: "0.000000000000000008",
+	.1000000000000001:   "0.1000000000000001",
+	.1000000000000002:   "0.1000000000000002",
+	.1000000000000003:   "0.1000000000000003",
+	.1000000000000005:   "0.1000000000000005",
+	.1000000000000008:   "0.1000000000000008",
+	1e25:                "10000000000000000000000000",
 }
 
 var testTableScientificNotation = map[string]string{
@@ -61,23 +54,12 @@ var testTableScientificNotation = map[string]string{
 }
 
 func init() {
-	for _, s := range testTable {
-		s.exact = strconv.FormatFloat(s.float, 'f', 300, 64)
-		if strings.ContainsRune(s.exact, '.') {
-			s.exact = strings.TrimRight(s.exact, "0")
-			s.exact = strings.TrimRight(s.exact, ".")
-		}
-	}
-
 	// add negatives
-	withNeg := testTable[:]
-	for _, s := range testTable {
-		if s.float > 0 {
-			withNeg = append(withNeg, &testEnt{-s.float, "-" + s.short, "-" + s.exact})
+	for f, s := range testTable {
+		if f > 0 {
+			testTable[-f] = "-" + s
 		}
 	}
-	testTable = withNeg
-
 	for e, s := range testTableScientificNotation {
 		if string(e[0]) != "-" && s != "0" {
 			testTableScientificNotation["-"+e] = "-" + s
@@ -86,9 +68,8 @@ func init() {
 }
 
 func TestNewFromFloat(t *testing.T) {
-	for _, x := range testTable {
-		s := x.exact
-		d := NewFromFloat(x.float)
+	for f, s := range testTable {
+		d := NewFromFloat(f)
 		if d.String() != s {
 			t.Errorf("expected %s, got %s (%s, %d)",
 				s, d.String(),
@@ -111,20 +92,7 @@ func TestNewFromFloat(t *testing.T) {
 }
 
 func TestNewFromString(t *testing.T) {
-	for _, x := range testTable {
-		s := x.short
-		d, err := NewFromString(s)
-		if err != nil {
-			t.Errorf("error while parsing %s", s)
-		} else if d.String() != s {
-			t.Errorf("expected %s, got %s (%s, %d)",
-				s, d.String(),
-				d.value.String(), d.exp)
-		}
-	}
-
-	for _, x := range testTable {
-		s := x.exact
+	for _, s := range testTable {
 		d, err := NewFromString(s)
 		if err != nil {
 			t.Errorf("error while parsing %s", s)
@@ -321,8 +289,7 @@ func TestNewFromBigIntWithExponent(t *testing.T) {
 }
 
 func TestJSON(t *testing.T) {
-	for _, x := range testTable {
-		s := x.short
+	for _, s := range testTable {
 		var doc struct {
 			Amount Decimal `json:"amount"`
 		}
@@ -391,8 +358,7 @@ func TestBadJSON(t *testing.T) {
 }
 
 func TestNullDecimalJSON(t *testing.T) {
-	for _, x := range testTable {
-		s := x.short
+	for _, s := range testTable {
 		var doc struct {
 			Amount NullDecimal `json:"amount"`
 		}
@@ -484,8 +450,7 @@ func TestNullDecimalBadJSON(t *testing.T) {
 }
 
 func TestXML(t *testing.T) {
-	for _, x := range testTable {
-		s := x.short
+	for _, s := range testTable {
 		var doc struct {
 			XMLName xml.Name `xml:"account"`
 			Amount  Decimal  `xml:"amount"`
@@ -2070,8 +2035,7 @@ func TestNullDecimal_Value(t *testing.T) {
 }
 
 func TestBinary(t *testing.T) {
-	for _, y := range testTable {
-		x := y.float
+	for x := range testTable {
 
 		// Create the decimal
 		d1 := NewFromFloat(x)
@@ -2106,8 +2070,7 @@ func slicesEqual(a, b []byte) bool {
 }
 
 func TestGobEncode(t *testing.T) {
-	for _, y := range testTable {
-		x := y.float
+	for x := range testTable {
 		d1 := NewFromFloat(x)
 
 		b1, err := d1.GobEncode()
