@@ -600,6 +600,21 @@ func (d Decimal) Round(places int32) Decimal {
 	return ret
 }
 
+// Round to ceil
+func (d Decimal) RoundCeil(places int32) Decimal {
+	// truncate to places + 1
+	ret := d.rescale(-places - 1)
+
+
+	_, m := ret.value.DivMod(ret.value, tenInt, new(big.Int))
+	ret.exp++
+	if m.Cmp(zeroInt) != 0 {
+		ret.value.Add(ret.value, oneInt)
+	}
+
+	return ret
+}
+
 // RoundBank rounds the decimal to places decimal places.
 // If the final digit to round is equidistant from the nearest two integers the
 // rounded value is taken as the even number
