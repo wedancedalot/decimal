@@ -2137,3 +2137,57 @@ func TestRoundBankAnomaly(t *testing.T) {
 		t.Errorf("Expected bank rounding %s to equal %s, but it was %s", b, expected, bRounded)
 	}
 }
+
+func TestDecimal_RoundCeil(t *testing.T) {
+	tests := []struct {
+		name   string
+		d      Decimal
+		places int32
+		want   Decimal
+	}{
+		{
+			name:   "many numbers",
+			d:      New(1, -16),
+			places: 4,
+			want:   New(1, -4),
+		},
+		{
+			name:   "exact value",
+			d:      New(1, -4),
+			places: 4,
+			want:   New(1, -4),
+		},
+		{
+			name:   "negative value",
+			d:      New(-1, -16),
+			places: 4,
+			want:   Zero,
+		},
+		{
+			name:   "many numbers",
+			d:      New(12345, -16),
+			places: 4,
+			want:   New(1, -4),
+		},
+		{
+			name:   "more numbers",
+			d:      New(1234567890123, -16),
+			places: 4,
+			want:   New(2, -4),
+		},
+		{
+			name:   "many numbers",
+			d:      New(123456789012, -16),
+			places: 4,
+			want:   New(1, -4),
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.d.RoundCeil(tt.places); !got.Equal(tt.want) {
+				t.Errorf("Decimal.RoundCeil() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

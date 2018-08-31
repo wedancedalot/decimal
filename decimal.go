@@ -600,19 +600,14 @@ func (d Decimal) Round(places int32) Decimal {
 	return ret
 }
 
-// Round to ceil
+// RoundCeil rounds the number to the nearest value greater than or equal to d with places precision.
+// Only nonnegative precisions are supported due to internal use of Truncate method.
 func (d Decimal) RoundCeil(places int32) Decimal {
-	// truncate to places + 1
-	ret := d.rescale(-places - 1)
-
-
-	_, m := ret.value.DivMod(ret.value, tenInt, new(big.Int))
-	ret.exp++
-	if m.Cmp(zeroInt) != 0 {
-		ret.value.Add(ret.value, oneInt)
+	trancated := d.Truncate(places)
+	if trancated.Equal(d) || d.Sign() < 0 {
+		return trancated
 	}
-
-	return ret
+	return trancated.Add(New(1, -places))
 }
 
 // RoundBank rounds the decimal to places decimal places.
